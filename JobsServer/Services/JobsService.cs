@@ -25,4 +25,18 @@ public class JobsService
     {
         Jobs.Add(job);
     }
+
+    public void UpdateJob(Job job)
+    {
+        var index = Jobs.FindIndex(j => j.Id == job.Id);
+        if (index != -1)
+        {
+            Jobs[index] = job;
+        }
+    }
+
+    public void DeleteJob(int id)
+    {
+        Jobs.Remove(GetJob(id));
+    }
 }

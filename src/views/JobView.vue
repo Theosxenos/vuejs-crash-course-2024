@@ -1,18 +1,69 @@
 <script setup>
-import {RouterLink} from "vue-router";
+import {onMounted, reactive} from "vue";
+import {RouterLink, useRoute} from "vue-router";
+import PulseLoader from 'vue-spinner/src/PulseLoader.vue'
+import axios from "axios";
+import BackButton from "@/components/BackButton.vue";
+import {useToast} from "vue-toastification";
+import router from "@/router/index.js";
+
+const route = useRoute();
+const jobId = route.params.id;
+
+const state = reactive({
+  job: {},
+  isLoading: true
+});
+
+const toast = useToast();
+
+const deleteJob = async () => {
+  try {
+    const confirmation = window.confirm('Are you sure you want to delete this job?');
+    if(confirmation) {
+      const response = await axios.delete(`/api/jobs/${state.job.id}`);
+      await router.push('/jobs');
+      toast.success(`Deleted job ${response.data.title}!`);
+    }
+  } catch (e) {
+    console.error('Could not delete job', e);
+    toast.error('Could not delete job!');
+  }
+};
+
+onMounted(async () => {
+  try {
+    const response = await axios.get('/api/jobs/' + jobId);
+    state.job = response.data;
+  } catch (e) {
+    console.error('Failed to load jobs', e);
+  } finally {
+    state.isLoading = false;
+  }
+});
 </script>
 
 <template>
-  <section class="bg-green-50">
+  <BackButton/>
+  <div v-if="state.isLoading">
+    <PulseLoader/>
+  </div>
+  <section v-else class="bg-green-50">
     <div class="container m-auto py-10 px-6">
       <div class="grid grid-cols-1 md:grid-cols-70/30 w-full gap-6">
         <main>
           <div class="bg-white p-6 rounded-lg shadow-md text-center md:text-left">
-            <div class="text-gray-500 mb-4">Full-Time</div>
-            <h1 class="text-3xl font-bold mb-4">Senior Vue Developer</h1>
+            <div class="text-gray-500 mb-4">
+              {{state.job.type}}
+            </div>
+            <h1 class="text-3xl font-bold mb-4">
+              {{state.job.title}}
+            </h1>
             <div class="text-gray-500 mb-4 flex align-middle justify-center md:justify-start">
-              <i class="fa-solid fa-location-dot text-lg text-orange-700 mr-2"></i>
-              <p class="text-orange-700">Boston, MA</p>
+              <p class="text-orange-700">
+                <i class="pi pi-map-marker text-lg text-orange-700 mr-2"></i>
+                {{state.job.location}}
+              </p>
             </div>
           </div>
 
@@ -22,15 +73,14 @@ import {RouterLink} from "vue-router";
             </h3>
 
             <p class="mb-4">
-              We are seeking a talented Front-End Developer to join our team
-              in Boston, MA. The ideal candidate will have strong skills in
-              HTML, CSS, and JavaScript, with experience working with modern
-              JavaScript frameworks such as Vue or Angular.
+              {{state.job.description}}
             </p>
 
             <h3 class="text-green-800 text-lg font-bold mb-2">Salary</h3>
 
-            <p class="mb-4">$70k - $80K / Year</p>
+            <p class="mb-4">
+              {{state.job.salary}}
+            </p>
           </div>
         </main>
 
@@ -40,13 +90,10 @@ import {RouterLink} from "vue-router";
           <div class="bg-white p-6 rounded-lg shadow-md">
             <h3 class="text-xl font-bold mb-6">Company Info</h3>
 
-            <h2 class="text-2xl">NewTek Solutions</h2>
+            <h2 class="text-2xl">{{state.job.company.name}}</h2>
 
             <p class="my-2">
-              NewTek Solutions is a leading technology company specializing in
-              web development and digital solutions. We pride ourselves on
-              delivering high-quality products and services to our clients
-              while fostering a collaborative and innovative work environment.
+              {{state.job.company.description}}
             </p>
 
             <hr class="my-4" />
@@ -54,20 +101,23 @@ import {RouterLink} from "vue-router";
             <h3 class="text-xl">Contact Email:</h3>
 
             <p class="my-2 bg-green-100 p-2 font-bold">
-              contact@newteksolutions.com
+              {{state.job.company.contactEmail}}
             </p>
 
             <h3 class="text-xl">Contact Phone:</h3>
 
-            <p class="my-2 bg-green-100 p-2 font-bold">555-555-5555</p>
+            <p class="my-2 bg-green-100 p-2 font-bold">
+              {{state.job.company.contactPhone}}
+            </p>
           </div>
 
           <!-- Manage -->
           <div class="bg-white p-6 rounded-lg shadow-md mt-6">
             <h3 class="text-xl font-bold mb-6">Manage Job</h3>
-            <a class="bg-green-500 hover:bg-green-600 text-white text-center font-bold py-2 px-4 rounded-full w-full focus:outline-none focus:shadow-outline mt-4 block"
-              href="add-job.html">Edit Job</a>
+            <RouterLink class="bg-green-500 hover:bg-green-600 text-white text-center font-bold py-2 px-4 rounded-full w-full focus:outline-none focus:shadow-outline mt-4 block"
+              :to="`/jobs/edit/${jobId}`">Edit Job</RouterLink>
             <button
+                @click="deleteJob"
               class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-full w-full focus:outline-none focus:shadow-outline mt-4 block">
               Delete Job
             </button>

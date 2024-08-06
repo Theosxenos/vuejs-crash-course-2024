@@ -13,10 +13,34 @@ public class JobsController(JobsService jobsService) : ControllerBase
         return jobsService.Jobs;
     }
 
-    [HttpGet($"{{{nameof(id)}:int}}")]
-    public Job? GetJob(int id)
+    [HttpGet($"{{{nameof(id)}:int}}", Name = "GetSingleJob")]
+    public IActionResult GetJob(int id)
     {
-        return jobsService.GetJob(id);
+        var job = jobsService.GetJob(id);
+        return job is not null ? Ok(job) : NotFound();
+    }
+
+    [HttpPost]
+    public ActionResult<Job> AddJob(Job job)
+    {
+        var lastId = jobsService.Jobs.Max(j => j.Id);
+        job.Id = ++lastId;
+        jobsService.AddJob(job);
+        return CreatedAtAction(nameof(GetJob), new { Id = job.Id }, job);
+    }
+
+    [HttpPut]
+    public IActionResult UpdateJob(Job job, int id = 0)
+    {
+        jobsService.UpdateJob(job);
+        return NoContent();
+    }
+
+    [HttpDelete]
+    public IActionResult DeleteJob(int id)
+    {
+        jobsService.DeleteJob(id);
+        return NoContent();
     }
     
 }
