@@ -1,10 +1,11 @@
 <script setup>
 
-import {onMounted, reactive} from "vue";
+import {onMounted, reactive, ref} from "vue";
 import axios from "axios";
 import router from "@/router/index.js";
 import {useToast} from "vue-toastification";
 import {useRoute} from "vue-router";
+import PulseLoader from "vue-spinner/src/PulseLoader.vue";
 
 const formData = reactive({
   type: 'Full-Time',
@@ -19,6 +20,13 @@ const formData = reactive({
     contactPhone: ''
   }
 });
+
+// const state = reactive({
+//   job: {},
+//   isLoading: true,
+// });
+
+const isLoading = ref(true);
 
 const route = useRoute();
 const toast = useToast();
@@ -40,18 +48,23 @@ onMounted(async () => {
     Object.assign(formData, response.data);
   } catch (e) {
     console.error('Could not find job', e)
-  } 
+  } finally {
+    isLoading.value = false;
+  }
 });
 </script>
 
 <template>
-  <section class="bg-green-50">
+  <div v-if="isLoading.value">
+    <PulseLoader />
+  </div>
+  <section v-else class="bg-green-50">
     <div class="container m-auto max-w-2xl py-24">
       <div
           class="bg-white px-6 py-8 mb-4 shadow-md rounded-md border m-4 md:m-0"
       >
         <form @submit.prevent="handleSubmit">
-          <h2 class="text-3xl text-center font-semibold mb-6">Add Job</h2>
+          <h2 class="text-3xl text-center font-semibold mb-6">Edit Job</h2>
 
           <div class="mb-4">
             <label for="type" class="block text-gray-700 font-bold mb-2"
